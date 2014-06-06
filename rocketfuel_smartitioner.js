@@ -1,4 +1,3 @@
-<script type = "text/javascript">
 // Rocket Fuel Smartitioner
 // Deterministic Pixel Rotation Script
 //
@@ -9,83 +8,83 @@
 // ACCEPTANCE OF THIS AGREEMENT.
 //
 // http://www.rocketfuel.com/
+
 if (!window.ROT) {
-	var ROT = {};
+    window.ROT = {};
+    window.PID_COOKIE_NAME = "rotp";
 }
+
 (function() {
+    var protocol = "https:" == document.location.protocol ? 'https:' : 'http:';
+    var cbuster = new Date().getTime() + Math.random().toString().substr(2);
 
-var protocol = "https:" == document.location.protocol ? 'https:' : 'http:';
-var cbuster = new Date().getTime() + Math.random().toString().substr(2);
+    // ==========================
+    // = Start customizing here =
+    // ==========================
+    ROT.pixels = [
+        protocol + '[INSERT_FIRST_COMPETITOR_URL_HERE]',
+        // protocol + '//www.example.com/pixel3', // add additional partners as you please
+        protocol + '[INSERT_ROCKETFUEL_URL_HERE]' + cbuster // IMPORTANT: no final comma on this list!
+    ];
+    ROT.weights = [1, 1]; // IMPORTANT: match the number of weights to the number of pixels
+    // =========================
+    // = Stop customizing here =
+    // =========================
 
-// ==========================
-// = Start customizing here =
-// ==========================
-	ROT.pixels = [
-	protocol+'[INSERT_FIRST_COMPETITOR_URL_HERE]',
-	// protocol+'//www.example.com/pixit cel3', // add additional partners as you please
-	protocol+'[INSERT_ROCKETFUEL_URL_HERE]'+cbuster // IMPORTANT: no final comma on this list!
-	];
-	ROT.weights = [1, 1]; // IMPORTANT: match the number of weights to the number of pixels
-// =========================
-// = Stop customizing here =
-// =========================
+    ROT.hc = function(s) {
+        var h = 0;
+        for (var i = 0; i < s.length; i++) {
+            h = h * 31 + s.charCodeAt(i);
+        }
+        return (h * 71) % 131;
+    };
 
-	ROT.hc = function(s) {
-		var h = 0;
-		if (s.length === 0) return h;
-		for (i = 0; i < s.length; i++) {
-			character = s.charCodeAt(i);
-			h = ((h << 5) - h) + character;
-			h = h & h;
-		}
-		return h;
-	};
-	ROT.sc = function(cn, v, eds) {
-		var ed = new Date();
-		ed.setDate(ed.getDate() + eds);
-		var cv = escape(v) + ((eds === null) ? "" : "; expires=" + ed.toUTCString());
-		var str = cn + "=" + cv;
-		document.cookie = str;
-	};
-	ROT.gc = function(cn) {
-		var i, x, y, ac = document.cookie.split(";");
-		for (i = 0; i < ac.length; i++)
-		{
-			x = ac[i].substr(0, ac[i].indexOf("="));
-			y = ac[i].substr(ac[i].indexOf("=") + 1);
-			x = x.replace(/^\s+|\s+$/g, "");
-			if (x == cn) {
-				return unescape(y);
-			}
-		}
-	};
-	var pid = parseInt(ROT.gc("rotp"),10);
-	if (isNaN(pid) || pid < 0 || pid > Object.keys(ROT.pixels).length - 1) {
-		// Hash user agent and plugins count to choose a deterministic pid
-		var total = 0;
-		for (var i = 0; i < ROT.weights.length; i++) {
-			total = total + ROT.weights[i];
-		}
-		var str = navigator.userAgent + navigator.plugins.length;
-		var hash = ((ROT.hc(str) * 71) % 131) % total;
-		total = 0;
-		var x = 0;
-		for (var j = 0; j < ROT.weights.length; j++) {
-			total = total + ROT.weights[j];
-			if (total > hash) {
-				pid = j;
-				break;
-			}
-		}
-		ROT.sc("ptnr", pid, 365); // save cookie for n days
-	}
+    ROT.save = function(name, value, days) {
+        var cv = escape(value);
+        if (days !== null) {
+            var d = new Date();
+            d.setDate(d.getDate() + days);
+            cv += "; expires=" + d.toUTCString();
+        }
+        document.cookie = name + "=" + cv;
+    };
 
-	if (ROT.pixels[pid]) {
-		var rf = document.createElement('img');
-		rf.src = ROT.pixels[pid];
-		var s = document.getElementsByTagName('script')[0];
-		s.parentNode.insertBefore(rf, s);
-	}
+    ROT.load = function(name) {
+        var x, y, ac = document.cookie.split(";");
+        for (var i = 0; i < ac.length; i++) {
+            var eq = ac[i].indexOf("=");
+            var x = ac[i].substr(0, eq).replace(/^\s+|\s+$/g, ""); // trimmed name
+            var y = ac[i].substr(eq + 1); // value
+            if (x == name) {
+                return unescape(y);
+            }
+        }
+    };
 
+    var pid = parseInt(ROT.load(PID_COOKIE_NAME), 10);
+
+    if (isNaN(pid) || pid < 0 || pid > Object.keys(ROT.pixels).length - 1) {
+        // Hash user agent and plugins count to choose a deterministic pid
+        var total = 0;
+        for (var i = 0; i < ROT.weights.length; i++) {
+            total = total + ROT.weights[i];
+        }
+        var id = navigator.userAgent + navigator.plugins.length;
+        var hash = ROT.hc(id) % total;
+        total = 0;
+        for (var i = 0; i < ROT.weights.length; i++) {
+            total = total + ROT.weights[i];
+            if (total > hash) {
+                pid = i;
+                break;
+            }
+        }
+        ROT.save(PID_COOKIE_NAME, pid, 365);
+    }
+
+    if (ROT.pixels[pid]) {
+        var pxImg = document.createElement('img');
+        pxImg.setAttribute('src', ROT.pixels[pid]);
+        document.body.insertBefore(pxImg, document.body.childNodes[0]);
+    }
 })();
-</script>
